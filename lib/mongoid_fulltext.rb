@@ -83,8 +83,8 @@ module Mongoid::FullTextSearch
       
       Mongoid.logger.info "Ensuring fts_index on #{coll.name}: #{index_definition}"
       coll.ensure_index(index_definition, { :name => 'fts_index' })
-      Mongoid.logger.info "Ensuring document_id index on #{coll.name}"
-      coll.ensure_index([['document_id', Mongo::ASCENDING]]) # to make removes fast
+      Mongoid.logger.info "Ensuring \"d_id\" (document ID) index on #{coll.name}"
+      coll.ensure_index([['d_id', Mongo::ASCENDING]]) # to make removes fast
     end
     
     def fulltext_search(query_string, options={})
@@ -130,7 +130,7 @@ module Mongoid::FullTextSearch
         results_so_far += doc[:count]
         ngram_score = ngrams[doc[:ngram][0]]
         Hash[coll.find(doc[:query], query_options).map do |candidate|
-               [candidate['document_id'], 
+               [candidate['d_id'],
                 {:clazz => candidate['class'], :score => candidate['score'] * ngram_score}]
              end]
       end.compact
@@ -246,7 +246,7 @@ module Mongoid::FullTextSearch
 
       # remove existing ngrams from external index
       coll = collection.db.collection(index_name)
-      coll.remove({'document_id' => self._id})
+      coll.remove({'d_id' => self._id})
       # extract ngrams from fields
       field_values = fulltext_config[:ngram_fields].map { |field| self.send(field) }
       ngrams = field_values.inject({}) { |accum, item| accum.update(self.class.all_ngrams(item, fulltext_config, false))}
@@ -264,7 +264,7 @@ module Mongoid::FullTextSearch
       end
       # insert new ngrams in external index
       ngrams.each_pair do |ngram, score|
-        index_document = {'ngram' => ngram, 'document_id' => self._id, 'score' => score, 'class' => self.class.name}
+        index_document = {'ngram' => ngram, 'd_id' => self._id, 'score' => score, 'class' => self.class.name}
         index_document['filter_values'] = filter_values if fulltext_config.has_key?(:filters)
         coll.insert(index_document)
       end
@@ -274,7 +274,7 @@ module Mongoid::FullTextSearch
   def remove_from_ngram_index
     self.mongoid_fulltext_config.each_pair do |index_name, fulltext_config|
       coll = collection.db.collection(index_name)
-      coll.remove({'document_id' => self._id})
+      coll.remove({'d_id' => self._id})
     end
   end
 

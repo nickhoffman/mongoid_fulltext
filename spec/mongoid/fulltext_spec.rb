@@ -215,7 +215,7 @@ module Mongoid
       it "doesn't blow up if garbage is in the index collection" do
         ExternalArtist.fulltext_search('warhol').should == [warhol, andy_warhol]
         index_collection = ExternalArtist.collection.db.collection(ExternalArtist.mongoid_fulltext_config.keys.first)
-        index_collection.update({'document_id' => warhol.id}, {'$set' => { 'document_id' => BSON::ObjectId.new }}, :multi => true)
+        index_collection.update({'d_id' => warhol.id}, {'$set' => { 'd_id' => BSON::ObjectId.new }}, :multi => true)
         # We should no longer be able to find warhol, but that shouldn't keep it from returning results
         ExternalArtist.fulltext_search('warhol').should == [andy_warhol]
       end
@@ -530,7 +530,7 @@ module Mongoid
         it "removes an existing record" do
           coll = Mongoid.master["mongoid_fulltext.index_basicartwork_0"]
           Mongoid.master.stub(:collection).with("mongoid_fulltext.index_basicartwork_0").and_return { coll }
-          coll.should_receive(:remove).once.with({'document_id' => flowers1._id})
+          coll.should_receive(:remove).once.with({'d_id' => flowers1._id})
           flowers1.update_ngram_index
         end
         
@@ -557,10 +557,10 @@ module Mongoid
               "key" => { "ngram" => 1, "score" => -1 }, 
               "v" => 0
             }, 
-            "document_id_1" => {
-              "name" => "document_id_1", 
-              "ns" => "mongoid_fulltext_test.mongoid_fulltext.index_basicartwork_0", 
-              "key" => { "document_id" => 1 }, 
+            "d_id_1" => {
+              "name" => "d_id_1",
+              "ns" => "mongoid_fulltext_test.mongoid_fulltext.index_basicartwork_0",
+              "key" => { "d_id" => 1 },
               "v"=>0 
             }
           }
